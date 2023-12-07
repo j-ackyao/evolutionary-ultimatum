@@ -1,0 +1,4 @@
+.vscode/
+make.*
+MakeFile
+makefile

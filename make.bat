@@ -1,1 +1,0 @@
-gcc -o main *.c *.h
