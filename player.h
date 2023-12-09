@@ -3,7 +3,7 @@
 
 
 struct player {
-	int offer;
+	double offer;
 	double lbound;
 	double ubound;
 };

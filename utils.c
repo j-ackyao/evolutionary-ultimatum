@@ -1,5 +1,15 @@
 #include <stdlib.h>
+#include <stdio.h>
+
 #include "utils.h"
+
+
+
+int read_int() {
+	int buf;
+	scanf("%d", &buf);
+	return buf;
+}
 
 // 0 to 1
 double get_rand() {

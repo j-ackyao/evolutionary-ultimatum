@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "utils.h"
 #include "player.h"
+#include "game.h"
 
 static const int SEED = 8888;
 
@@ -11,23 +13,23 @@ int gen;
 int main(int argv, char* argc[]) {
 	srand(SEED);
 
-	if (argv == 1) {
-		printf("Provide an initial population\n");
-		return 0;
-	} else if (argv == 2) {
-		printf("Provide number of generations\n");
+	printf("Provide an initial population: ");
+	int pop = read_int();
+
+	if (!pop) {
+		printf("Invalid population size provided\n");
 		return 0;
 	}
 
-	pop = atoi(argc[1]);
-	gen = atoi(argc[2]);
-	
-	printf("Initial population size: %d\n", pop);
-	for (int i = 0; i < 10; i++)
-		init_player();
+	printf("Creating an inital population of %d... ", pop);
+	fflush(stdout);
+	init_game(pop);
+	printf("Done\n");
 
-	struct player a = init_player();
+	summarize_game();
 
-	printf("%f", a.lbound);
+	clear_game();
+
+	// printf("player offer: %f\nplayer lowerbound: %f\nplayer upperbound: %f\n", a.offer, a.lbound, a.ubound);
 }
 
