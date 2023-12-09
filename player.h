@@ -6,6 +6,7 @@ struct player {
 	double offer;
 	double lbound;
 	double ubound;
+	double fitness;
 };
 
 struct player init_player();

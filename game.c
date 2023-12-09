@@ -27,24 +27,28 @@ void run_sim() {
 
 }
 
-void run_iter(int iterations) {
-
+void run_sim_i(int iterations) {
+    for (;iterations > 0; iterations--)
+        run_sim();
 }
 
 void summarize_game() {
     double offer_mean;
     double lbound_mean;
     double ubound_mean;
+    double fitness_mean;
     for (int i = 0; i < size_; i++) {
         offer_mean += population_[i].offer;
         lbound_mean += population_[i].lbound;
         ubound_mean += population_[i].ubound;
+        fitness_mean += population_[i].fitness;
     }
     offer_mean = offer_mean / size_;
     lbound_mean = lbound_mean / size_;
     ubound_mean = ubound_mean / size_;
-    printf("Offer mean: %f\nLower bound mean: %f\nUpper bound mean: %f\n",
-     offer_mean, lbound_mean, ubound_mean);
+    fitness_mean = fitness_mean / size_;
+    printf("Offer mean: %f\nLower bound mean: %f\nUpper bound mean: %f\nFitness mean: %f\n",
+     offer_mean, lbound_mean, ubound_mean, fitness_mean);
 }
 
 // exports current game state into a csv file

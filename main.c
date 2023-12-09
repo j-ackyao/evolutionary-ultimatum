@@ -5,6 +5,7 @@
 #include "player.h"
 #include "game.h"
 
+
 static const int SEED = 8888;
 
 int pop;
@@ -26,7 +27,16 @@ int main(int argv, char* argc[]) {
 	init_game(pop);
 	printf("Done\n");
 
-	summarize_game();
+	int input;
+	for (int input = read_int();;input = read_int()) {
+		if (input == -1) {
+			break;
+		}
+
+		run_sim_i(input);
+
+		summarize_game();
+	}
 
 	clear_game();
 
