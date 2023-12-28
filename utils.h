@@ -5,7 +5,7 @@ int read_int();
 
 double get_rand();
 
-double get_rand_range(int low, int high);
+double get_rand_range(double low, double high);
 
 double min(double a, double b);
 

@@ -7,17 +7,21 @@
 
 int read_int() {
 	int buf;
-	scanf("%d", &buf);
+	int result = scanf("%d", &buf);
+	if (result != 1) {
+		printf("Invalid input or input stream error\n");
+		return 0x80000000;
+	}
 	return buf;
 }
 
 // 0 to 1
 double get_rand() {
-	return (double) rand() / RAND_MAX;
+	return rand() / (double) RAND_MAX;
 }
 
 // low to high
-double get_rand_range(int low, int high) {
+double get_rand_range(double low, double high) {
 	return get_rand()*(high - low) + low;
 }
 
