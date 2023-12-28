@@ -7,8 +7,11 @@
 // how many player-one-games a player does in each generation (positive int)
 #define INTERACTIONS_PER_ITER 1
 
-// the proportion of fitness a player must have in total fitness to reproduce (0 to 1 double)
-#define FITNESS_CUTOFF 0.01
+// top percentile of population to keep (0 to 1 double)
+#define FITNESS_CUTOFF 0.3
+
+// proportion of population at end of each iteration reserved for "mutation"/new randoms (0 to 1 double)
+#define MUTATION_RATE 0.1
 
 struct player {
 	double offer;

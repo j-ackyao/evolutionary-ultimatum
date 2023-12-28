@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "utils.h"
 #include "player.h"
@@ -14,6 +15,14 @@ int gen;
 int main(int argv, char* argc[]) {
 	srand(SEED);
 
+	// some assertion checks here
+	assert(FITNESS_CUTOFF <= 1);
+	assert(FITNESS_CUTOFF >= 0);
+	assert(MUTATION_RATE + FITNESS_CUTOFF <= 1);
+	assert(MUTATION_RATE >= 0);
+
+
+
 	printf("Provide an initial population: ");
 	int pop = read_int();
 
@@ -22,10 +31,9 @@ int main(int argv, char* argc[]) {
 		return 0;
 	}
 
-	printf("Creating an inital population of %d... ", pop);
+	printf("Creating an inital population of %d", pop);
 	fflush(stdout);
 	init_game(pop);
-	printf("Done\n");
 	printf("Input number of iterations to run with population, -1 to exit\n");
 	int input;
 	for (int input = read_int();;input = read_int()) {
@@ -34,7 +42,8 @@ int main(int argv, char* argc[]) {
 		else if (input < 0)
 			break;
 		
-		printf("Running %d iterations...\n", input);
+		printf("Running %d iterations", input);
+		fflush(stdout);
 
 		run_sim_i(input);
 
