@@ -8,7 +8,6 @@ struct player init_player() {
 	double a = get_rand_range(0, MAX_RESOURCE);
 	double b = get_rand_range(0, MAX_RESOURCE);
 	struct player p = {get_rand_range(0, MAX_RESOURCE), min(a, b), max(a, b), 0};
-	// printf("ubound: %f\n", p.ubound);
 	return p;
 }
 

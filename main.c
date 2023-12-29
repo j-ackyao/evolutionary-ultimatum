@@ -34,6 +34,7 @@ int main(int argv, char* argc[]) {
 	printf("Creating an inital population of %d", pop);
 	fflush(stdout);
 	init_game(pop);
+	summarize_game();
 	printf("Input number of iterations to run with population, -1 to exit\n");
 	int input;
 	for (int input = read_int();;input = read_int()) {

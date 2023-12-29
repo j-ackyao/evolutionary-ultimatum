@@ -1,5 +1,6 @@
 .vscode/
-make.*
+make.sh
+make_debug.sh
 MakeFile
 makefile
 uthreads/
