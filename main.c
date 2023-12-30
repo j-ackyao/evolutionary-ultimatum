@@ -34,26 +34,35 @@ int main(int argv, char* argc[]) {
 	printf("Creating an inital population of %d", pop);
 	fflush(stdout);
 	init_game(pop);
-	summarize_game();
-	printf("Input number of iterations to run with population, -1 to exit\n");
+	summarize_game(0);
+	printf("Input number of iterations to run with population, -1 to exit, -2 to toggle writing to CSV\n");
 	int input;
+
+	int iterations = 0;
+	int write = 0;
 	for (int input = read_int();;input = read_int()) {
-		if (input == -2) 
+		if (input == -2) {
+			write = write ? 0 : 1;
+			printf("%s writing to CSV file\n", write ? "Now" : "Stopped");
 			continue;
-		else if (input < 0)
+		} else if (input < 0) {
 			break;
+		}
 		
 		printf("Running %d iterations", input);
 		fflush(stdout);
 
+		iterations += input;
+
 		run_sim_i(input);
 
-		summarize_game();
+		summarize_game(iterations);
+
+		if (write)
+			write_csv(iterations);
 	}
 
 	printf("Exiting...\n");
-	clear_game();
-
-	// printf("player offer: %f\nplayer lowerbound: %f\nplayer upperbound: %f\n", a.offer, a.lbound, a.ubound);
+	clean();
 }
 

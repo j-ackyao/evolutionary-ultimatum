@@ -24,7 +24,7 @@ void clear_players() {
     }
 }
 
-// frees any dynamically allocated resources
+// frees any dynamically allocated resources of a game
 void clear_game() {
     clear_players();
     free(population_);
@@ -198,27 +198,51 @@ void run_sim_i(int iterations) {
         
 }
 
-void summarize_game() {
+void summarize_game(int iteration) {
     double offer_mean = 0;
     double lbound_mean = 0;
     double ubound_mean = 0;
-    double fitness_mean = 0;
+    // double fitness_mean = 0;
     for (int i = 0; i < size_; i++) {
         offer_mean += population_[i]->offer;
         lbound_mean += population_[i]->lbound;
         ubound_mean += population_[i]->ubound;
-        fitness_mean += population_[i]->fitness;
+        // fitness_mean += population_[i]->fitness;
     }
     offer_mean = offer_mean / size_;
     lbound_mean = lbound_mean / size_;
     ubound_mean = ubound_mean / size_;
-    fitness_mean = fitness_mean / size_;
-    printf("Offer mean: %f\nLower bound mean: %f\nUpper bound mean: %f\nFitness mean: %f",
-     offer_mean, lbound_mean, ubound_mean, fitness_mean);
+    // fitness_mean = fitness_mean / size_;
+    printf("Iteration %d ==============\n", iteration);
+    printf("Offer mean: %f\nLower bound mean: %f\nUpper bound mean: %f\n",
+     offer_mean, lbound_mean, ubound_mean);
+    printf("===========================\n", iteration);
 }
+
+
+// csv writing stuff here
+FILE *csv_file;
+
+
 
 // exports current game state into a csv file
-void export_game() {
-
+void write_csv(int iteration) {
+    if (!csv_file) {
+        csv_file = fopen("output.csv", "w");
+        fprintf(csv_file, "iteration,offer,lbound,ubound\n");
+    }
+    for (int i = 0; i < size_; i++) {
+        struct player* p = population_[i];
+        fprintf(csv_file, "%d,%f,%f,%f\n", iteration, p->offer, p->lbound, p->ubound);
+    }
 }
 
+
+
+// cleans up everything
+void clean() {
+    clear_game();
+    
+    if (csv_file)
+        fclose(csv_file);
+}
