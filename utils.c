@@ -1,8 +1,21 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "utils.h"
 
+
+void assertions() {
+	assert(MAX_RESOURCE > 0);
+	assert(INTERACTIONS_PER_ITER > 0);
+	assert(SECONDARY_INTERACT == 1 || SECONDARY_INTERACT == 0);
+	assert(FITNESS_CUTOFF <= 1);
+	assert(FITNESS_CUTOFF >= 0);
+	assert(MUTATION_RATE + FITNESS_CUTOFF <= 1);
+	assert(MUTATION_RATE >= 0);
+	assert(KEEP_SELF == 1 || KEEP_SELF == 0);
+	assert(SELF_RPD == 1 || SELF_RPD == 0);
+}
 
 
 int read_int() {
@@ -20,7 +33,7 @@ double get_rand() {
 	return rand() / (double) RAND_MAX;
 }
 
-// low to high
+// low to high, both inclusive
 double get_rand_range(double low, double high) {
 	return get_rand()*(high - low) + low;
 }
@@ -36,3 +49,4 @@ double min(double a, double b) {
 double avg(double a, double b) {
 	return (a + b) / 2;
 }
+

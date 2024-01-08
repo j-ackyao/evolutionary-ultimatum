@@ -16,7 +16,7 @@
 int size_;
 struct player** population_;
 
-
+// frees all players in population_
 void clear_players() {
     for (int i = 0; i < size_; i++) {
         free(population_[i]);
@@ -24,36 +24,72 @@ void clear_players() {
     }
 }
 
-// frees any dynamically allocated resources of a game
+// frees players and population_
 void clear_game() {
     clear_players();
     free(population_);
     population_ = NULL;
 }
 
+FILE *csv_file;
+
+// exports current game state into a csv file along with the iteration the generation is in
+void write_csv(int iteration) {
+    if (!csv_file) {
+        csv_file = fopen("output.csv", "w");
+        if (!csv_file) {
+            printf("Failed to open to output.csv\n");
+            return;
+        }
+        fprintf(csv_file, "iteration,offer,lbound,ubound\n");
+    }
+    for (int i = 0; i < size_; i++) {
+        struct player* p = population_[i];
+        fprintf(csv_file, "%d,%f,%f,%f\n", iteration, p->offer, p->lbound, p->ubound);
+    }
+}
+
+// cleans up everything
+void clean() {
+    clear_game();
+    
+    if (csv_file)
+        fclose(csv_file);
+}
+
+
+
 // initialize population with pop_size players
 void init_population(int pop_size) {
     size_ = pop_size;
-    // could instead replace this with array of pointers to malloced players
     population_ = malloc(sizeof(struct player*) * pop_size);
+
     if (!population_) {
         printf("failed\nUnable to allocate sufficient memory\n");
         exit(0);
     }
+
     for (int i = 0; i < pop_size; i++) {
+        // visualize progress
         if (pop_size / 10 != 0 && i % (pop_size / 10) == 0) {
             printf(".");
             fflush(stdout);
         }
+        
         struct player* p = malloc(sizeof(struct player));
+
+        if (!p) {
+            printf("failed\nUnable to allocate sufficient memory\n");
+            clear_game();
+            exit(0);
+        }
+
         *p = init_player();
         population_[i] = p;
     }
-
-	printf(" Done\n");
 }
 
-// initialize game state
+// initialize game, so far only need to initialize population
 void init_game(int pop_size) {
     init_population(pop_size);
 }
@@ -61,20 +97,29 @@ void init_game(int pop_size) {
 // helper to simulate one generation interactions
 void sim_gen() {
     for (int p = 0; p < size_; p++) {
+        struct player* player1 = population_[p];
+        double offer = player1->offer;
+
+        DEBUG_PRINT("\nPlayer %d's turn, offering %.2f:\n", p, offer);
+
         for (int i = 0; i < INTERACTIONS_PER_ITER; i++) {
             int p2_i = get_rand_range(0, (double) size_);
-            while (p2_i == p)
+
+            // checking for p2_i == size_ should not be necessary as *almost* never happens
+            // but does very often on windows somehow
+            while (p2_i == p || p2_i == size_)
                 p2_i = get_rand_range(0, (double) size_);
-            // opponent will almost never be size_
-            // opponent is player two
-            struct player* player1 = population_[p];
+
             struct player* player2 = population_[p2_i];
-            double offer = player1->offer;
-            if (player2->lbound <= offer && player2->ubound >= offer) {
-                // accept offer
+            int accept = player2->lbound <= offer && player2->ubound >= offer;
+
+            if (accept) {
                 player1->fitness += offer;
-                player2->fitness += MAX_RESOURCE - offer;
+                if (SECONDARY_INTERACT)
+                    player2->fitness += MAX_RESOURCE - offer;
             }
+
+            DEBUG_PRINT("%s with player %d (%.2f, %.2f), fitness: %.2f\n", accept ? "Success" : "Failed ", p2_i, player2->lbound, player2->ubound, player1->fitness);
         }
     }
 }
@@ -91,22 +136,21 @@ void next_gen(struct player** next_pop) {
     int top_n = size_ * FITNESS_CUTOFF;
     struct player* survivors[top_n];
 
-    // can probably replace this with a linear time function to find top percentile
+    // using qsort to find top percentile
     qsort(population_, size_, sizeof(struct player*), compare_fitness);
 
     // determine how many children it produces based on fitness proportion in top percentile
     int children_tot = ((double) 1 - MUTATION_RATE - (KEEP_SELF ? FITNESS_CUTOFF : 0)) * size_;
-    DEBUG_PRINT("Children: %d\n", children_tot);
+    DEBUG_PRINT("\nNumber of children expected from reproduction: %d\n", children_tot);
 
-    // keep track of survivors and total fitness
+
     double fit_tot = 0;
     for (int p = 0; p < top_n; p++) {
         survivors[p] = population_[p];
         fit_tot += population_[p]->fitness;
-        // printf("top %d player has fitness %f with offer %f accepting %f to %f\n", p, population_[p]->fitness, population_[p]->offer, population_[p]->lbound, population_[p]->ubound);
     }
 
-    DEBUG_PRINT("Total fitness: %f\n", fit_tot);
+    DEBUG_PRINT("Total fitness: %.2f\n", fit_tot);
 
     // iterate through each survivor, prioritizing the highest fitness first
     // children created so far
@@ -114,6 +158,7 @@ void next_gen(struct player** next_pop) {
     // index for next pop
     int np = 0;
     for (int p = 0; p < top_n; p++) {
+
         // determine the number of children the parent can have based on fitness
         int children_n = round(children_tot * survivors[p]->fitness / fit_tot);
         if (children_n + children_sf > children_tot)
@@ -130,11 +175,13 @@ void next_gen(struct player** next_pop) {
             next_pop[np++] = next_gen_parent;
         }
         
+        DEBUG_PRINT("\nTop %d has %d children in next gen with %.2f fitness\n", p + 1, children_n, survivors[p]->fitness);
         for (int i = 0; i < children_n; i++) {
             int parent2_i = get_rand_range(0, top_n);
-            // can reproduce with sel, too lazy to consider extremely small edge cases
-            // while (second_parent == p) 
-            //     second_parent = get_rand_range(0, top_n);
+            
+            // once again checking if the index is out of bounds
+            while (parent2_i == top_n || (!SELF_RPD && parent2_i == p)) 
+                parent2_i = get_rand_range(0, top_n);
 
             struct player* parent2 = survivors[parent2_i];
 
@@ -148,13 +195,11 @@ void next_gen(struct player** next_pop) {
 
             next_pop[np++] = child;
 
-            DEBUG_PRINT("Parent %d reproduced with parent %d to make o %f l %f u %f\n", p, parent2_i, avg_offer, avg_lbound, avg_ubound);
+            DEBUG_PRINT("Top %d reproduced with top %d: offers %.2f, accepts (%.2f, %.2f)\n", p + 1, parent2_i + 1, avg_offer, avg_lbound, avg_ubound);
         }
-
-        DEBUG_PRINT("Top %d has %d in next gen from %f fitness\n", p, children_n, survivors[p]->fitness);
     }
-    DEBUG_PRINT("Total expected players in next before mutation: %d\n", np);
-    
+    DEBUG_PRINT("\nTotal expected players in next before mutation: %d\n", np);
+
     // in case of rounding error from reproduction, mutation can fill in gaps
     while (np < size_) {
         struct player* m = malloc(sizeof(struct player));
@@ -162,23 +207,28 @@ void next_gen(struct player** next_pop) {
         next_pop[np++] = m;
     }
     
-    DEBUG_PRINT("Total next population size: %d\n", np);
+    DEBUG_PRINT("Total next population size after mutation: %d\n", np);
 }
 
 // runs one iteration of population and handles both sim and next generations
 void run_sim() {
     // first ensure next generation is possible
     // instead, could overwrite in existing population and just free a player at each step
+    
     struct player** next_pop = malloc(sizeof(struct player*) * size_);
-    if (!population_) {
+    if (!next_pop) {
         printf("Failed to allocate sufficient memory for next generation\n");
         return;
     }
-
-
+    
+    
+    // printf("here2\n");
     sim_gen();
+
+    // printf("here3\n"); 
     next_gen(next_pop);
 
+    // printf("here4\n");    
     clear_game();
     population_ = next_pop;
 }
@@ -213,36 +263,9 @@ void summarize_game(int iteration) {
     lbound_mean = lbound_mean / size_;
     ubound_mean = ubound_mean / size_;
     // fitness_mean = fitness_mean / size_;
-    printf("Iteration %d ==============\n", iteration);
-    printf("Offer mean: %f\nLower bound mean: %f\nUpper bound mean: %f\n",
+    printf("Iteration %d ===============\n", iteration);
+    printf("Offer mean: %.4f\nLower bound mean: %.4f\nUpper bound mean: %.4f\n",
      offer_mean, lbound_mean, ubound_mean);
     printf("===========================\n", iteration);
 }
 
-
-// csv writing stuff here
-FILE *csv_file;
-
-
-
-// exports current game state into a csv file
-void write_csv(int iteration) {
-    if (!csv_file) {
-        csv_file = fopen("output.csv", "w");
-        fprintf(csv_file, "iteration,offer,lbound,ubound\n");
-    }
-    for (int i = 0; i < size_; i++) {
-        struct player* p = population_[i];
-        fprintf(csv_file, "%d,%f,%f,%f\n", iteration, p->offer, p->lbound, p->ubound);
-    }
-}
-
-
-
-// cleans up everything
-void clean() {
-    clear_game();
-    
-    if (csv_file)
-        fclose(csv_file);
-}
