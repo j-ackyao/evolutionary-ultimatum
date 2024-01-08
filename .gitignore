@@ -6,3 +6,4 @@ MakeFile
 makefile
 main.*
 main
+output.csv
